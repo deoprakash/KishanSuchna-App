@@ -1,0 +1,85 @@
+{
+  "app": {
+    "name": "કિસાન સૂચના",
+    "tagline": "કૃષિ માહિતી સિસ્ટમ"
+  },
+  "common": {
+    "loading": "લોડ થઈ રહ્યું છે...",
+    "error": "ભૂલ",
+    "retry": "ફરી પ્રયાસ કરો",
+    "close": "બંધ કરો",
+    "select": "પસંદ કરો",
+    "search": "શોધો",
+    "refresh": "રિફ્રેશ",
+    "save": "સેવ કરો",
+    "cancel": "રદ કરો",
+    "yes": "હા",
+    "no": "ના",
+    "ok": "બરાબર",
+    "day": "દિવસ"
+  },
+  "auth": {
+    "login": "લોગિન",
+    "logout": "લોગઆઉટ",
+    "register": "નોંધણી",
+    "username": "વપરાશકર્તા નામ",
+    "password": "પાસવર્ડ",
+    "confirmPassword": "પાસવર્ડની પુષ્ટિ કરો",
+    "forgotPassword": "પાસવર્ડ ભૂલ્યા છો?",
+    "loginSuccess": "લોગિન સફળ!",
+    "loginError": "ખોટા પ્રમાણપત્રો",
+    "registerSuccess": "નોંધણી સફળ!",
+    "welcomeBack": "પાછા આવવા બદલ સ્વાગત!",
+    "createAccount": "ખાતું બનાવો",
+    "alreadyHaveAccount": "શું તમારી પાસે પહેલેથી ખાતું છે?",
+    "dontHaveAccount": "શું તમારી પાસે ખાતું નથી?"
+  },
+  "weather": {
+    "title": "હવામાન માહિતી",
+    "currentWeather": "વર્તમાન હવામાન",
+    "forecast": "5-દિવસની આગાહી",
+    "lastUpdated": "છેલ્લે અપડેટ થયું",
+    "selectLocation": "સ્થાન પસંદ કરો",
+    "searchLocation": "શહેર અથવા રાજ્ય શોધો...",
+    "noCitiesFound": "કોઈ શહેરો મળ્યા નથી",
+    "searchDifferentKeywords": "અલગ કીવર્ડ્સ સાથે શોધવાનો પ્રયાસ કરો",
+    "loadingCities": "શહેરો લોડ થઈ રહ્યા છે...",
+    "fetchingWeather": "હવામાન ડેટા મેળવી રહ્યા છીએ...",
+    "unableToLoadWeather": "હવામાન ડેટા લોડ કરી શકાયો નથી",
+    "checkConnection": "હવામાન ડેટા મેળવવામાં નિષ્ફળ. કૃપા કરીને તમારું ઇન્ટરનેટ કનેક્શન તપાસો અને ફરી પ્રયાસ કરો.",
+    "humidity": "ભેજ",
+    "wind": "પવન",
+    "today": "આજે",
+    "tomorrow": "કાલે",
+    "agriculturalTips": "🌾 કૃષિ ટિપ્સ",
+    "tips": {
+      "rainy": "• આજે સિંચાઈથી બચો\n• પાણી ભરાવાની તપાસ કરો\n• પાકોને વધારે પાણીથી બચાવો",
+      "sunny": "• કાપણી માટે સારો દિવસ\n• પર્યાપ્ત સિંચાઈ સુનિશ્ચિત કરો\n• ગરમીના તાણની નિગરાની કરો",
+      "general": "• પાકની સ્થિતિની નિગરાની કરો\n• ખેતરની પ્રવૃત્તિઓનું આયોજન કરો\n• હવામાન અપડેટ્સ નિયમિત તપાસો"
+    }
+  },
+  "navigation": {
+    "home": "હોમ",
+    "weather": "હવામાન",
+    "profile": "પ્રોફાઇલ",
+    "settings": "સેટિંગ્સ",
+    "about": "વિશે"
+  },
+  "settings": {
+    "language": "ભાષા",
+    "selectLanguage": "ભાષા પસંદ કરો",
+    "notification": "નોટિફિકેશન્સ",
+    "theme": "થીમ",
+    "units": "એકમો",
+    "celsius": "સેલ્સિયસ",
+    "fahrenheit": "ફેરનહીટ"
+  },
+  "home": {
+    "welcome": "કિસાન સૂચનામાં આપનું સ્વાગત છે",
+    "subtitle": "તમારા કૃષિ સાથી",
+    "quickActions": "ઝડપી ક્રિયાઓ",
+    "weatherToday": "આજનું હવામાન",
+    "marketPrices": "બજાર ભાવ",
+    "cropAdvisory": "પાક સલાહ"
+  }
+}

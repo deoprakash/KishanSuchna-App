@@ -1,0 +1,85 @@
+{
+  "app": {
+    "name": "ਕਿਸਾਨ ਸੂਚਨਾ",
+    "tagline": "ਖੇਤੀ ਜਾਣਕਾਰੀ ਸਿਸਟਮ"
+  },
+  "common": {
+    "loading": "ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...",
+    "error": "ਗਲਤੀ",
+    "retry": "ਫਿਰ ਕੋਸ਼ਿਸ਼ ਕਰੋ",
+    "close": "ਬੰਦ ਕਰੋ",
+    "select": "ਚੁਣੋ",
+    "search": "ਖੋਜੋ",
+    "refresh": "ਰਿਫਰੈਸ਼",
+    "save": "ਸੇਵ ਕਰੋ",
+    "cancel": "ਰੱਦ ਕਰੋ",
+    "yes": "ਹਾਂ",
+    "no": "ਨਹੀਂ",
+    "ok": "ਠੀਕ ਹੈ",
+    "day": "ਦਿਨ"
+  },
+  "auth": {
+    "login": "ਲੌਗਇਨ",
+    "logout": "ਲੌਗਆਉਟ",
+    "register": "ਰਜਿਸਟਰ",
+    "username": "ਯੂਜ਼ਰ ਨੇਮ",
+    "password": "ਪਾਸਵਰਡ",
+    "confirmPassword": "ਪਾਸਵਰਡ ਦੀ ਪੁਸ਼ਟੀ ਕਰੋ",
+    "forgotPassword": "ਪਾਸਵਰਡ ਭੁੱਲ ਗਏ?",
+    "loginSuccess": "ਲੌਗਇਨ ਸਫਲ!",
+    "loginError": "ਗਲਤ ਪਛਾਣ ਪੱਤਰ",
+    "registerSuccess": "ਰਜਿਸਟਰੇਸ਼ਨ ਸਫਲ!",
+    "welcomeBack": "ਵਾਪਸੀ ਤੇ ਸੁਆਗਤ!",
+    "createAccount": "ਖਾਤਾ ਬਣਾਓ",
+    "alreadyHaveAccount": "ਪਹਿਲਾਂ ਤੋਂ ਖਾਤਾ ਹੈ?",
+    "dontHaveAccount": "ਖਾਤਾ ਨਹੀਂ ਹੈ?"
+  },
+  "weather": {
+    "title": "ਮੌਸਮ ਦੀ ਜਾਣਕਾਰੀ",
+    "currentWeather": "ਮੌਜੂਦਾ ਮੌਸਮ",
+    "forecast": "5-ਦਿਨਾਂ ਦਾ ਪੂਰਵ ਅਨੁਮਾਨ",
+    "lastUpdated": "ਆਖਰੀ ਅਪਡੇਟ",
+    "selectLocation": "ਸਥਾਨ ਚੁਣੋ",
+    "searchLocation": "ਸ਼ਹਿਰ ਜਾਂ ਰਾਜ ਖੋਜੋ...",
+    "noCitiesFound": "ਕੋਈ ਸ਼ਹਿਰ ਨਹੀਂ ਮਿਲਿਆ",
+    "searchDifferentKeywords": "ਵੱਖਰੇ ਸ਼ਬਦਾਂ ਨਾਲ ਖੋਜਣ ਦੀ ਕੋਸ਼ਿਸ਼ ਕਰੋ",
+    "loadingCities": "ਸ਼ਹਿਰ ਲੋਡ ਹੋ ਰਹੇ ਹਨ...",
+    "fetchingWeather": "ਮੌਸਮ ਡੇਟਾ ਲਿਆ ਜਾ ਰਿਹਾ ਹੈ...",
+    "unableToLoadWeather": "ਮੌਸਮ ਡੇਟਾ ਲੋਡ ਨਹੀਂ ਹੋ ਸਕਿਆ",
+    "checkConnection": "ਮੌਸਮ ਡੇਟਾ ਲਿਆਉਣ ਵਿੱਚ ਅਸਫਲ। ਕਿਰਪਾ ਕਰਕੇ ਆਪਣਾ ਇੰਟਰਨੈੱਟ ਕਨੈਕਸ਼ਨ ਚੈੱਕ ਕਰੋ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+    "humidity": "ਨਮੀ",
+    "wind": "ਹਵਾ",
+    "today": "ਅੱਜ",
+    "tomorrow": "ਕੱਲ੍ਹ",
+    "agriculturalTips": "🌾 ਖੇਤੀ ਟਿਪਸ",
+    "tips": {
+      "rainy": "• ਅੱਜ ਸਿੰਚਾਈ ਤੋਂ ਬਚੋ\n• ਪਾਣੀ ਭਰਨ ਦੀ ਜਾਂਚ ਕਰੋ\n• ਫਸਲਾਂ ਨੂੰ ਜ਼ਿਆਦਾ ਪਾਣੀ ਤੋਂ ਬਚਾਓ",
+      "sunny": "• ਵਾਢੀ ਲਈ ਚੰਗਾ ਦਿਨ\n• ਕਾਫੀ ਸਿੰਚਾਈ ਯਕੀਨੀ ਬਣਾਓ\n• ਗਰਮੀ ਦੇ ਤਣਾਅ ਦੀ ਨਿਗਰਾਨੀ ਕਰੋ",
+      "general": "• ਫਸਲ ਦੀ ਸਥਿਤੀ ਦੀ ਨਿਗਰਾਨੀ ਕਰੋ\n• ਖੇਤ ਦੀਆਂ ਗਤੀਵਿਧੀਆਂ ਦੀ ਯੋਜਨਾ ਬਣਾਓ\n• ਮੌਸਮ ਅਪਡੇਟ ਨਿਯਮਿਤ ਚੈੱਕ ਕਰੋ"
+    }
+  },
+  "navigation": {
+    "home": "ਹੋਮ",
+    "weather": "ਮੌਸਮ",
+    "profile": "ਪ੍ਰੋਫਾਈਲ",
+    "settings": "ਸੈਟਿੰਗਾਂ",
+    "about": "ਬਾਰੇ"
+  },
+  "settings": {
+    "language": "ਭਾਸ਼ਾ",
+    "selectLanguage": "ਭਾਸ਼ਾ ਚੁਣੋ",
+    "notification": "ਸੂਚਨਾਵਾਂ",
+    "theme": "ਥੀਮ",
+    "units": "ਯੂਨਿਟਾਂ",
+    "celsius": "ਸੈਲਸੀਅਸ",
+    "fahrenheit": "ਫਾਰਨਹਾਈਟ"
+  },
+  "home": {
+    "welcome": "ਕਿਸਾਨ ਸੂਚਨਾ ਵਿੱਚ ਸੁਆਗਤ ਹੈ",
+    "subtitle": "ਤੁਹਾਡਾ ਖੇਤੀ ਸਾਥੀ",
+    "quickActions": "ਤੁਰੰਤ ਕਾਰਵਾਈਆਂ",
+    "weatherToday": "ਅੱਜ ਦਾ ਮੌਸਮ",
+    "marketPrices": "ਮਾਰਕੀਟ ਰੇਟ",
+    "cropAdvisory": "ਫਸਲ ਸਲਾਹ"
+  }
+}

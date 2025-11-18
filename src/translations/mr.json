@@ -1,0 +1,85 @@
+{
+  "app": {
+    "name": "किसान सूचना",
+    "tagline": "कृषी माहिती प्रणाली"
+  },
+  "common": {
+    "loading": "लोड होत आहे...",
+    "error": "त्रुटी",
+    "retry": "पुन्हा प्रयत्न करा",
+    "close": "बंद करा",
+    "select": "निवडा",
+    "search": "शोधा",
+    "refresh": "रिफ्रेश",
+    "save": "जतन करा",
+    "cancel": "रद्द करा",
+    "yes": "होय",
+    "no": "नाही",
+    "ok": "ठीक आहे",
+    "day": "दिवस"
+  },
+  "auth": {
+    "login": "लॉगिन",
+    "logout": "लॉगआउट",
+    "register": "नोंदणी",
+    "username": "वापरकर्ता नाव",
+    "password": "पासवर्ड",
+    "confirmPassword": "पासवर्डची पुष्टी करा",
+    "forgotPassword": "पासवर्ड विसरलात?",
+    "loginSuccess": "लॉगिन यशस्वी!",
+    "loginError": "चुकीची ओळखपत्रे",
+    "registerSuccess": "नोंदणी यशस्वी!",
+    "welcomeBack": "परत स्वागत!",
+    "createAccount": "खाते तयार करा",
+    "alreadyHaveAccount": "आधीच खाते आहे?",
+    "dontHaveAccount": "खाते नाही?"
+  },
+  "weather": {
+    "title": "हवामान माहिती",
+    "currentWeather": "सध्याचे हवामान",
+    "forecast": "5-दिवसांचा अंदाज",
+    "lastUpdated": "शेवटचे अद्यतन",
+    "selectLocation": "स्थान निवडा",
+    "searchLocation": "शहर किंवा राज्य शोधा...",
+    "noCitiesFound": "कोणतीही शहरे सापडली नाहीत",
+    "searchDifferentKeywords": "वेगळ्या कीवर्डसह शोधण्याचा प्रयत्न करा",
+    "loadingCities": "शहरे लोड होत आहेत...",
+    "fetchingWeather": "हवामान डेटा मिळवत आहे...",
+    "unableToLoadWeather": "हवामान डेटा लोड करू शकत नाही",
+    "checkConnection": "हवामान डेटा मिळवण्यात अयशस्वी. कृपया तुमचे इंटरनेट कनेक्शन तपासा आणि पुन्हा प्रयत्न करा.",
+    "humidity": "ओलावा",
+    "wind": "वारा",
+    "today": "आज",
+    "tomorrow": "उद्या",
+    "agriculturalTips": "🌾 कृषी टिप्स",
+    "tips": {
+      "rainy": "• आज पाणी देणे टाळा\n• पाणी साचल्याची तपासणी करा\n• पिकांना जास्त पाण्यापासून वाचवा",
+      "sunny": "• कापणीसाठी चांगला दिवस\n• पुरेसे पाणी देणे सुनिश्चित करा\n• उष्णतेच्या तणावावर लक्ष ठेवा",
+      "general": "• पिकांच्या स्थितीवर लक्ष ठेवा\n• शेतातील कामांची योजना करा\n• हवामान अद्यतने नियमितपणे तपासा"
+    }
+  },
+  "navigation": {
+    "home": "मुख्यपृष्ठ",
+    "weather": "हवामान",
+    "profile": "प्रोफाईल",
+    "settings": "सेटिंग्ज",
+    "about": "बद्दल"
+  },
+  "settings": {
+    "language": "भाषा",
+    "selectLanguage": "भाषा निवडा",
+    "notification": "सूचना",
+    "theme": "थीम",
+    "units": "एकके",
+    "celsius": "सेल्सिअस",
+    "fahrenheit": "फॅरेनहाईट"
+  },
+  "home": {
+    "welcome": "किसान सूचनामध्ये आपले स्वागत",
+    "subtitle": "तुमचा कृषी साथीदार",
+    "quickActions": "त्वरित कृती",
+    "weatherToday": "आजचे हवामान",
+    "marketPrices": "बाजार भाव",
+    "cropAdvisory": "पिक सल्ला"
+  }
+}

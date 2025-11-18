@@ -1,0 +1,10 @@
+Flask>=2.0
+flask-cors>=3.0
+Pillow>=9.0
+# Optional: install torch/torchvision if you plan to load a PyTorch model
+torch>=1.13.0
+torchvision>=0.14.0
+requests>=2.0
+pymongo>=4.0
+dnspython>=2.0
+python-dotenv>=1.0.0
