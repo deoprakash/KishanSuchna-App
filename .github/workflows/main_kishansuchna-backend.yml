@@ -60,4 +60,14 @@ jobs:
         with:
           app-name: 'kishansuchna-backend'
           slot-name: 'Production'
-          package: 'Backend'        # <– REMEMBER: no ./ and no trailing /
+          # After download-artifact the artifact is extracted to ./python-app
+          # When we uploaded the Backend folder, its contents appear under
+          # ./python-app/Backend. Use that path as the package to deploy.
+          package: './python-app/Backend'
+
+      - name: List deployed package files (debug)
+        run: |
+          echo "Contents of working dir"
+          ls -la
+          echo "Contents of python-app"
+          ls -la python-app || true
