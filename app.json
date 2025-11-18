@@ -17,8 +17,10 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Your location is used to show local weather forecasts.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "Your location is used to show local weather forecasts."
-      }
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Your location is used to show local weather forecasts.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "com.deoprakash.KishanSuchna"
     },
     "android": {
       "adaptiveIcon": {
