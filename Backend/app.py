@@ -76,82 +76,57 @@ class_names = [
 MODEL = None
 DEVICE = "cuda" if TORCH_AVAILABLE and torch.cuda.is_available() else "cpu"
 
-
 def try_load_model(model_path: Optional[str] = None):
-    """Load the model if available, else return None."""
+    """Load the model strictly from MODEL_PATH in .env."""
     global MODEL
     LOGGER.info("try_load_model called - current MODEL=%s, TORCH_AVAILABLE=%s", MODEL, TORCH_AVAILABLE)
+
     if MODEL is not None:
-        LOGGER.info("Model already loaded, returning existing instance")
         return MODEL
 
     if not TORCH_AVAILABLE:
         LOGGER.warning("PyTorch not available — running in mock mode")
-        MODEL = None
         return None
 
-    if model_path is None:
-        # check env var or fallback names (sometimes files have spaces)
-        model_path = os.environ.get("MODEL_PATH")
-        if not model_path:
-            # Search in common locations relative to this script (project root)
-            base_dir = os.path.dirname(__file__) or os.getcwd()
-            candidates = [
-                "best_plant_vision_model.pth",
-                "best_plant_vision_model (1).pth",
-                "model.pth",
-                "model.pt"
-            ]
-            subdirs = ["", "Model", "model", "models", "weights", "checkpoints"]
-
-            # Try exact candidate names in each subdir
-            found = None
-            for sd in subdirs:
-                for candidate in candidates:
-                    path = os.path.join(base_dir, sd, candidate)
-                    if os.path.isfile(path):
-                        found = path
-                        break
-                if found:
-                    break
-
-            # If still not found, try globbing for similar names anywhere under base_dir
-            if not found:
-                import glob
-                patterns = [
-                    os.path.join(base_dir, "**", "best_plant_vision_model*.pth"),
-                    os.path.join(base_dir, "**", "best_plant_vision_model*.pt"),
-                    os.path.join(base_dir, "**", "model*.pth"),
-                ]
-                for pat in patterns:
-                    matches = glob.glob(pat, recursive=True)
-                    if matches:
-                        # pick the first match (should be unique in most cases)
-                        found = matches[0]
-                        break
-
-            model_path = found
-
-    if not model_path or not os.path.isfile(model_path):
-        LOGGER.warning("No model file found; continuing in mock mode")
-        MODEL = None
+    # ------------------------------
+    # 🔥 ONLY READ FROM .env
+    # ------------------------------
+    model_path = os.getenv("MODEL_PATH")
+    if not model_path:
+        LOGGER.error("MODEL_PATH not set in .env")
         return None
 
+    # Resolve absolute path relative to this file
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    model_path = os.path.join(base_dir, model_path)
+
+    LOGGER.info(f"Resolved MODEL_PATH: {model_path}")
+
+    if not os.path.isfile(model_path):
+        LOGGER.error(f"Model file not found at: {model_path}")
+        return None
+
+    # ------------------------------
+    # 🔥 LOAD MODEL
+    # ------------------------------
     try:
         LOGGER.info("Loading model from %s", model_path)
         state = torch.load(model_path, map_location=DEVICE)
+
         model = EfficientNetWithMixup(num_classes=len(class_names)).to(DEVICE)
-        # support checkpoint that stores state_dict or the raw state_dict itself
+
         if isinstance(state, dict) and "state_dict" in state:
             model.load_state_dict(state["state_dict"])
         else:
             model.load_state_dict(state)
+
         model.eval()
         MODEL = model
-        LOGGER.info("Model loaded on %s", DEVICE)
+        LOGGER.info("Model loaded successfully on %s", DEVICE)
         return MODEL
+
     except Exception:
-        LOGGER.exception("Failed to load model — falling back to mock")
+        LOGGER.exception("Failed to load model — fallback to mock")
         MODEL = None
         return None
 
