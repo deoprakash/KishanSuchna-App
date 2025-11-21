@@ -3,7 +3,6 @@ import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { Alert, Image, Linking, Modal, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import LanguageSelector from '../../components/LanguageSelector';
 import { BACKEND_URL } from '../../config';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from '../../context/TranslationContext';
@@ -20,6 +19,7 @@ const Profile = () => {
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [photoB64, setPhotoB64] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [removePhoto, setRemovePhoto] = useState(false);
   const [phoneEdit, setPhoneEdit] = useState<string>(user?.phone || '');
 
   const userInitials = useMemo(() => {
@@ -112,8 +112,10 @@ const Profile = () => {
     setName(user?.fullName || user?.name || '');
     setEmail(user?.email || '');
     setPhoneEdit(user?.phone || '');
-    setPhotoUri(null);
-    setPhotoB64(null);
+    // Keep any existing uploaded profile photo visible until the user
+    // explicitly replaces or removes it. Clearing temp photo state here
+    // caused the preview to disappear unexpectedly.
+    setRemovePhoto(false);
     setEditVisible(true);
   };
 
@@ -176,6 +178,10 @@ const Profile = () => {
         payload.newPhone = trimmedPhone;
       }
       if (photoB64) payload.profilePhotoB64 = photoB64;
+      // If the user removed the photo in the modal, send a hint so the
+      // backend can clear the stored URL. Backend will ignore unknown fields
+      // so this is safe even if not implemented server-side yet.
+      if (removePhoto && !photoB64) payload.profilePhotoRemove = true;
 
       const resp = await fetch(`${BACKEND_URL}/auth/update`, {
         method: 'POST',
@@ -190,6 +196,12 @@ const Profile = () => {
 
       const data = await resp.json();
       await updateUser({ ...data.user, name: data.user.fullName || name });
+      // Clear local temporary image data after successful save. The
+      // persisted `profilePhotoUrl` will be available from the updated user
+      // returned by the server (and persisted by AuthContext).
+      setPhotoUri(null);
+      setPhotoB64(null);
+      setRemovePhoto(false);
       setEditVisible(false);
     } catch (e: any) {
       Alert.alert('Error', e?.message || 'Failed to update profile');
@@ -331,7 +343,7 @@ const Profile = () => {
                       </TouchableOpacity>
                     </>
                   ) : (
-                    <TouchableOpacity onPress={() => { setPhotoUri(null); setPhotoB64(null); }} style={{ backgroundColor: '#e74c3c', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 }}>
+                    <TouchableOpacity onPress={() => { setPhotoUri(null); setPhotoB64(null); setRemovePhoto(true); }} style={{ backgroundColor: '#e74c3c', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 }}>
                       <Text style={{ color: '#fff', fontWeight: '700' }}>Remove Photo</Text>
                     </TouchableOpacity>
                   )}
