@@ -9,6 +9,14 @@ import { homeStyles as styles } from '../../styles/homeStyles';
 const Home = () => {
   const { t } = useTranslation();
 
+  const handleCameraPress = () => {
+    router.push('/camera');
+  };
+
+  const handleWeatherPress = () => {
+    router.push('/weather');
+  };
+
   return (
     <View style={styles.container}>
       <Image 

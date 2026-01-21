@@ -367,13 +367,13 @@ def auth_register():
         
     data = request.get_json(force=True, silent=True) or {}
     full_name = data.get("fullName") or data.get("name")
-    phone = data.get("phone")
+    phone = str(data.get("phone") or "").strip()
     password = data.get("password")
 
     if not full_name or not phone or not password:
         return jsonify({"error": "fullName, phone, and password are required"}), 400
 
-    if not str(phone).isdigit() or len(str(phone)) != 10:
+    if not phone.isdigit() or len(phone) != 10:
         return jsonify({"error": "phone must be a 10-digit number"}), 400
 
     if len(password) < 6:
@@ -382,7 +382,7 @@ def auth_register():
     try:
         user = {
             "fullName": full_name,
-            "phone": str(phone),
+            "phone": phone,
             "passwordHash": generate_password_hash(password),
             "createdAt": int(time.time())
         }
@@ -405,7 +405,7 @@ def auth_login():
         return jsonify({"error": "database_unavailable"}), 503
         
     data = request.get_json(force=True, silent=True) or {}
-    phone = str(data.get("phone") or "")
+    phone = str(data.get("phone") or "").strip()
     password = data.get("password") or ""
 
     if not phone or not password:
@@ -413,6 +413,7 @@ def auth_login():
 
     try:
         user = users_collection.find_one({"phone": phone})
+        LOGGER.info("Login attempt phone=%s user_found=%s", phone, bool(user))
         if not user or not check_password_hash(user.get("passwordHash", ""), password):
             return jsonify({"error": "invalid_credentials"}), 401
 
@@ -423,6 +424,39 @@ def auth_login():
     except Exception as e:
         LOGGER.exception("Login failed")
         return jsonify({"error": "login_failed"}), 500
+
+
+@app.route("/auth/reset-password", methods=["POST"])
+def auth_reset_password():
+    if not MONGO_AVAILABLE:
+        return jsonify({"error": "database_unavailable"}), 503
+
+    data = request.get_json(force=True, silent=True) or {}
+    phone = str(data.get("phone") or "").strip()
+    new_password = data.get("newPassword") or ""
+
+    if not phone or not new_password:
+        return jsonify({"error": "phone and newPassword are required"}), 400
+
+    if not phone.isdigit() or len(phone) != 10:
+        return jsonify({"error": "phone must be a 10-digit number"}), 400
+
+    if len(new_password) < 6:
+        return jsonify({"error": "password must be at least 6 characters"}), 400
+
+    try:
+        user = users_collection.find_one({"phone": phone})
+        if not user:
+            return jsonify({"error": "user_not_found"}), 404
+
+        users_collection.update_one(
+            {"phone": phone},
+            {"$set": {"passwordHash": generate_password_hash(new_password)}}
+        )
+        return jsonify({"status": "ok"}), 200
+    except Exception:
+        LOGGER.exception("Reset password failed")
+        return jsonify({"error": "reset_failed"}), 500
 
 
 @app.route("/auth/update", methods=["POST"])

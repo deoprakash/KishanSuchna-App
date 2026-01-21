@@ -776,14 +776,14 @@ const InquiryList: React.FC<{ listings: Listing[]; onClose: () => void; onViewed
         arr = raw ? JSON.parse(raw) : [];
       }
       
-      console.log('All inquiries:', arr);
-      console.log('User phone:', user?.phone);
-      console.log('All listings:', listings);
+      // console.log('All inquiries:', arr);
+      // console.log('User phone:', user?.phone);
+      // console.log('All listings:', listings);
       // Filter to show only inquiries on the current user's listings
       const myListingIds = listings.filter(l => l.ownerPhone === user?.phone).map(l => l.id);
-      console.log('My listing IDs:', myListingIds);
+      // console.log('My listing IDs:', myListingIds);
       const myInquiries = arr.filter((inq: InquiryItem) => myListingIds.includes(inq.listingId));
-      console.log('My inquiries:', myInquiries);
+      // console.log('My inquiries:', myInquiries);
       setInquiries(myInquiries);
       // Mark as viewed
       onViewed();

@@ -8,13 +8,21 @@ import { useTranslation } from '../../context/TranslationContext';
 
 const CameraTab = () => {
   const { t } = useTranslation();
-  const [isLoading, setIsLoading] = useState(false);
+  const [loadingAction, setLoadingAction] = useState<'camera' | 'gallery' | 'analyze' | null>(null);
+  const isLoading = loadingAction !== null;
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isAnalyzed, setIsAnalyzed] = useState(false);
   const [detectionLabel, setDetectionLabel] = useState<string | null>(null);
   const [detectionConfidence, setDetectionConfidence] = useState<number | null>(null);
   const [detectionMessage, setDetectionMessage] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState(false);
+
+  const resetAnalysisState = () => {
+    setIsAnalyzed(false);
+    setDetectionLabel(null);
+    setDetectionConfidence(null);
+    setDetectionMessage(null);
+  };
 
   // Request camera permissions on component mount
   useEffect(() => {
@@ -28,7 +36,7 @@ const CameraTab = () => {
       return () => {
         // This runs when the screen is unfocused (leaving the page)
         setCapturedImage(null);
-        setIsAnalyzed(false);
+        resetAnalysisState();
       };
     }, [])
   );
@@ -52,7 +60,7 @@ const CameraTab = () => {
 
   const handleCameraPress = async () => {
     try {
-      setIsLoading(true);
+      setLoadingAction('camera');
       
       // Check permissions first
       const cameraPermission = await ImagePicker.getCameraPermissionsAsync();
@@ -64,7 +72,7 @@ const CameraTab = () => {
             t('camera.cameraPermissionMessage'),
             [{ text: t('common.ok'), style: 'default' }]
           );
-          setIsLoading(false);
+          setLoadingAction(null);
           return;
         }
       }
@@ -79,6 +87,7 @@ const CameraTab = () => {
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const imageUri = result.assets[0].uri;
+        resetAnalysisState();
         setCapturedImage(imageUri);
         
         // Show success message
@@ -96,13 +105,13 @@ const CameraTab = () => {
         [{ text: t('common.ok'), style: 'default' }]
       );
     } finally {
-      setIsLoading(false);
+      setLoadingAction(null);
     }
   };
 
   const handleGalleryPress = async () => {
     try {
-      setIsLoading(true);
+      setLoadingAction('gallery');
       
       // Check permissions first
       const mediaPermission = await ImagePicker.getMediaLibraryPermissionsAsync();
@@ -114,7 +123,7 @@ const CameraTab = () => {
             t('camera.galleryPermissionMessage'),
             [{ text: t('common.ok'), style: 'default' }]
           );
-          setIsLoading(false);
+          setLoadingAction(null);
           return;
         }
       }
@@ -129,6 +138,7 @@ const CameraTab = () => {
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const imageUri = result.assets[0].uri;
+        resetAnalysisState();
         setCapturedImage(imageUri);
         
         // Show success message
@@ -146,16 +156,26 @@ const CameraTab = () => {
         [{ text: t('common.ok'), style: 'default' }]
       );
     } finally {
-      setIsLoading(false);
+      setLoadingAction(null);
     }
   };
 
   const handleImageRetake = () => {
     setCapturedImage(null);
-    setIsAnalyzed(false);
+    resetAnalysisState();
   };
 
   const handleClearImage = () => {
+    if (Platform.OS === 'web') {
+      const confirmFn = (globalThis as any)?.confirm as undefined | ((message?: string) => boolean);
+      const ok = confirmFn ? confirmFn(`${t('camera.clearImage')}\n\n${t('camera.clearImageConfirm')}`) : true;
+      if (ok) {
+        setCapturedImage(null);
+        resetAnalysisState();
+      }
+      return;
+    }
+
     Alert.alert(
       t('camera.clearImage'),
       t('camera.clearImageConfirm'),
@@ -169,7 +189,7 @@ const CameraTab = () => {
           style: 'destructive',
           onPress: () => {
             setCapturedImage(null);
-            setIsAnalyzed(false);
+            resetAnalysisState();
           },
         },
       ]
@@ -185,7 +205,7 @@ const CameraTab = () => {
 
     (async () => {
       try {
-        setIsLoading(true);
+        setLoadingAction('analyze');
         setDetectionLabel(null);
         setDetectionConfidence(null);
         setDetectionMessage(null);
@@ -232,7 +252,7 @@ const CameraTab = () => {
         console.error('Analyze error', err);
         Alert.alert(t('common.error'), err?.message || 'Analysis failed');
       } finally {
-        setIsLoading(false);
+        setLoadingAction(null);
       }
     })();
   };
@@ -287,7 +307,7 @@ const CameraTab = () => {
                 onPress={handleAnalyzeImage}
                 disabled={isLoading || isAnalyzed}
               >
-                {isLoading ? (
+                {loadingAction === 'analyze' ? (
                   <ActivityIndicator color="white" size="small" />
                 ) : (
                   <FontAwesome name="search" size={20} color="white" />
@@ -305,7 +325,7 @@ const CameraTab = () => {
               onPress={handleCameraPress}
               disabled={isLoading}
             >
-              {isLoading ? (
+              {loadingAction === 'camera' ? (
                 <ActivityIndicator color="white" size="small" />
               ) : (
                 <FontAwesome name="camera" size={32} color="white" />
@@ -318,7 +338,7 @@ const CameraTab = () => {
               onPress={handleGalleryPress}
               disabled={isLoading}
             >
-              {isLoading ? (
+              {loadingAction === 'gallery' ? (
                 <ActivityIndicator color="white" size="small" />
               ) : (
                 <FontAwesome name="image" size={32} color="white" />

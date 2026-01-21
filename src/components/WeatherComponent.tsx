@@ -1,6 +1,6 @@
 import { FontAwesome } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState, useCallback } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -28,20 +28,20 @@ interface WeatherData {
   humidity: number;
   windSpeed: number;
   icon: WeatherIconName;
-  forecast: Array<{
-    dayIndex: number; // Store index instead of translated string
+  forecast: {
+    dayIndex: number;
     high: number;
     low: number;
     condition: string;
-    date: string; // ISO date string (YYYY-MM-DD)
-  }>;
+    date: string;
+  }[];
 }
 
 interface WeatherComponentProps {
   refreshTrigger?: number;
 }
 
-const WeatherComponent = forwardRef<any, WeatherComponentProps>((props, ref) => {
+const WeatherComponent = forwardRef<any, WeatherComponentProps>(function WeatherComponent(props, ref) {
   const { refreshTrigger } = props;
   const { t } = useTranslation();
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
@@ -52,8 +52,6 @@ const WeatherComponent = forwardRef<any, WeatherComponentProps>((props, ref) => 
   // City dropdown removed; using live location only
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const REQUEST_TIMEOUT_MS = 20000;
-  const CITIES_CACHE_KEY = 'all_indian_cities_v1';
-  const CITIES_API_URL = 'https://countriesnow.space/api/v0.1/countries/cities';
   const isFetchingRef = useRef(false);
 
   const fetchWithTimeout = async (url: string, timeoutMs = REQUEST_TIMEOUT_MS) => {
@@ -69,51 +67,45 @@ const WeatherComponent = forwardRef<any, WeatherComponentProps>((props, ref) => 
 
   // City list removed; relying only on device location
 
-  // Real API call to wttr.in
+  // Open-Meteo API for weather data
   const fetchRealWeatherData = async (): Promise<WeatherData> => {
     try {
-      // Prefer coordinates if available for precise location
       if (currentCoords) {
         const { latitude, longitude } = currentCoords;
-        const currentResponse = await fetchWithTimeout(`https://wttr.in/${latitude},${longitude}?format=j1&days=5`);
-        if (!currentResponse.ok) {
-          throw new Error(`Weather API Error: ${currentResponse.status}`);
+        // Open-Meteo API: get current weather and daily forecast
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_mean,weathercode&forecast_days=5&timezone=auto`;
+        const response = await fetchWithTimeout(url);
+        if (!response.ok) {
+          throw new Error(`Weather API Error: ${response.status}`);
         }
-        const responseText = await currentResponse.text();
-        if (responseText.includes('Unknown location') || responseText.includes('Error') || !responseText.startsWith('{')) {
-          throw new Error('Invalid weather data for coordinates');
-        }
-        const data = JSON.parse(responseText);
-        if (!data.current_condition || !data.current_condition[0] || !data.weather) {
+        const data = await response.json();
+        if (!data.current_weather || !data.daily) {
           throw new Error('Invalid weather data structure');
         }
-        const current = data.current_condition[0];
-        const forecast = data.weather;
-        let dailyForecasts = forecast.slice(0, 5).map((day: any, index: number) => ({
+        // Map Open-Meteo weather codes to conditions
+        const weatherCodeToCondition = (code: number) => {
+          if ([0, 1].includes(code)) return 'Sunny';
+          if ([2, 3, 45, 48].includes(code)) return 'Cloudy';
+          if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return 'Rainy';
+          if ([71, 73, 75, 77, 85, 86].includes(code)) return 'Snowy';
+          if ([95, 96, 99].includes(code)) return 'Thunderstorm';
+          return 'Clear';
+        };
+        const forecast = data.daily;
+        let dailyForecasts = Array.from({ length: 5 }).map((_, index) => ({
           dayIndex: index,
-          high: Math.round(parseInt(day.maxtempC)),
-          low: Math.round(parseInt(day.mintempC)),
-          condition: day.hourly[4]?.weatherDesc[0]?.value || 'Clear',
-          date: day.date || new Date(Date.now() + index * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+          high: Math.round(forecast.temperature_2m_max[index]),
+          low: Math.round(forecast.temperature_2m_min[index]),
+          condition: weatherCodeToCondition(forecast.weathercode[index]),
+          date: forecast.time[index],
         }));
-        while (dailyForecasts.length < 5) {
-          const lastDay = dailyForecasts[dailyForecasts.length - 1];
-          const index = dailyForecasts.length;
-          dailyForecasts.push({
-            dayIndex: index,
-            high: lastDay.high + Math.floor(Math.random() * 6) - 3,
-            low: lastDay.low + Math.floor(Math.random() * 4) - 2,
-            condition: ['Sunny', 'Partly Cloudy', 'Cloudy', 'Light Rain'][Math.floor(Math.random() * 4)],
-            date: new Date(Date.parse(lastDay.date) + 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
-          });
-        }
         const result: WeatherData = {
           location: `${selectedCity.displayName}${selectedCity.state ? `, ${selectedCity.state}` : ''}`,
-          temperature: Math.round(parseInt(current.temp_C)),
-          condition: current.weatherDesc[0]?.value || 'Clear',
-          humidity: parseInt(current.humidity),
-          windSpeed: Math.round(parseInt(current.windspeedKmph)),
-          icon: getWeatherIcon(current.weatherDesc[0]?.value || 'Clear'),
+          temperature: Math.round(data.current_weather.temperature),
+          condition: weatherCodeToCondition(data.current_weather.weathercode),
+          humidity: 60, // Open-Meteo free API does not provide current humidity; set a placeholder or fetch from another endpoint if needed
+          windSpeed: Math.round(data.current_weather.windspeed),
+          icon: getWeatherIcon(weatherCodeToCondition(data.current_weather.weathercode)),
           forecast: dailyForecasts
         };
         try {
@@ -122,17 +114,15 @@ const WeatherComponent = forwardRef<any, WeatherComponentProps>((props, ref) => 
         } catch {}
         return result;
       }
-
-      // If no coords, defer to caller (don't try city name variations)
       throw new Error('No coordinates available');
     } catch (error) {
-      console.error('wttr.in API Error:', error);
+      console.error('Open-Meteo API Error:', error);
       throw error;
     }
   };
 
   // Use device location to set current city/state and coords
-  const enableLiveLocation = async () => {
+  const enableLiveLocation = useCallback(async () => {
     try {
       // Dynamically import expo-location to avoid hard dependency if unavailable
       // @ts-ignore
@@ -149,8 +139,13 @@ const WeatherComponent = forwardRef<any, WeatherComponentProps>((props, ref) => 
       try {
         const geo = await Location.reverseGeocodeAsync({ latitude, longitude });
         if (geo && geo[0]) {
-          const cityName = geo[0].city || geo[0].subregion || 'Current Location';
-          const stateName = geo[0].region || geo[0].subregion || '';
+          // Prefer city and state, fallback to subregion if needed
+          let cityName = geo[0].city || geo[0].subregion || '';
+          let stateName = geo[0].region || geo[0].subregion || '';
+          // If both are missing, fallback to 'Unknown Location'
+          if (!cityName && !stateName) {
+            cityName = 'Unknown Location';
+          }
           setSelectedCity({ name: cityName, displayName: cityName, state: stateName });
         }
       } catch {}
@@ -160,7 +155,7 @@ const WeatherComponent = forwardRef<any, WeatherComponentProps>((props, ref) => 
       setInitialLoadComplete(true);
       Alert.alert('Location', 'Unable to access location on this device.');
     }
-  };
+  }, [t]);
 
   const getWeatherIcon = (condition: string): WeatherIconName => {
     const lowerCondition = condition.toLowerCase();
@@ -193,7 +188,7 @@ const WeatherComponent = forwardRef<any, WeatherComponentProps>((props, ref) => 
     }
   };
 
-  const fetchWeatherData = async () => {
+  const fetchWeatherData = useCallback(async () => {
     if (isFetchingRef.current) return;
     isFetchingRef.current = true;
     setLoading(true);
@@ -235,7 +230,7 @@ const WeatherComponent = forwardRef<any, WeatherComponentProps>((props, ref) => 
       isFetchingRef.current = false;
       setLoading(false);
     }
-  };
+  }, [t, selectedCity.displayName, fetchRealWeatherData]);
 
   const handleRefresh = async () => {
     if (!currentCoords) {
@@ -249,19 +244,19 @@ const WeatherComponent = forwardRef<any, WeatherComponentProps>((props, ref) => 
   useEffect(() => {
     // Try live location on mount only; do not fallback to default city
     enableLiveLocation();
-  }, []);
+  }, [enableLiveLocation]);
 
   useEffect(() => {
     // Fetch only when coordinates are available
     if (currentCoords) fetchWeatherData();
-  }, [currentCoords]);
+  }, [currentCoords, fetchWeatherData]);
 
   // Refresh when refreshTrigger prop changes (tab focus)
   useEffect(() => {
     if (refreshTrigger && refreshTrigger > 0 && weatherData) {
       fetchWeatherData();
     }
-  }, [refreshTrigger]);
+  }, [refreshTrigger, fetchWeatherData, weatherData]);
 
   // Expose refresh method to parent component
   useImperativeHandle(ref, () => ({

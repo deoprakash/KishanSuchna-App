@@ -91,17 +91,19 @@ Created to help get the backend out of mock mode and returning real predictions.
 
 ## User Management (Register/Login)
 
-Users are stored in `Backend/users.json`. If you see `409 (CONFLICT)` on `/auth/register`, that phone is already registered.
+When `MONGO_URI` is set (via `.env` or environment), users are stored in MongoDB with a unique index on `phone`. A `409 (CONFLICT)` response from `/auth/register` means that phone is already registered.
 
-Quick options:
-- Edit `users.json` manually to remove or change the phone.
-- Use the helper script:
+Quick options (MongoDB):
+- Use the helper script to list/remove/reset users directly in Mongo:
 
 ```powershell
-# From Backend/ (env activated)
-python tools/users_admin.py list
-python tools/users_admin.py remove --phone 6203608218
-python tools/users_admin.py reset
+# From Backend/ (venv activated) — ensure MONGO_URI is set
+python tools/users_mongo_admin.py list
+python tools/users_mongo_admin.py remove --phone 6203608218
+python tools/users_mongo_admin.py reset
 ```
+
+Legacy (file-based) mode:
+- If `MONGO_URI` is not set, the auth endpoints are unavailable (503). The legacy `tools/users_admin.py` manages `Backend/users.json` only for older setups.
 
 After changing users, retry registration or login from the app.

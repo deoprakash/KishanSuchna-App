@@ -127,7 +127,12 @@ const VerifyOTP = () => {
   };
 
   const handleBackToLogin = () => {
-    router.back();
+    const canGoBack = (router as any)?.canGoBack?.() ?? false;
+    if (canGoBack) {
+      router.back();
+    } else {
+      router.replace('/(auth)/login');
+    }
   };
 
   const formatPhoneNumber = (phone: string) => {

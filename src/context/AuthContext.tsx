@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -33,11 +34,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const checkAuthStatus = async () => {
     try {
       setLoading(true);
-      
-      // Check if user data exists in AsyncStorage
-      const userData = await AsyncStorage.getItem('userData');
-      const authToken = await AsyncStorage.getItem('authToken');
-      
+      let userData = null;
+      let authToken = null;
+      if (Platform.OS === 'web') {
+        userData = window.localStorage.getItem('userData');
+        authToken = window.localStorage.getItem('authToken');
+      } else {
+        userData = await AsyncStorage.getItem('userData');
+        authToken = await AsyncStorage.getItem('authToken');
+      }
       if (userData && authToken) {
         setUser(JSON.parse(userData));
         setIsAuthenticated(true);
@@ -54,13 +59,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (userData: any) => {
     try {
-      // Store user data and auth token in AsyncStorage
+      const token = 'dummy_auth_token_' + Date.now();
+      if (Platform.OS === 'web') {
+        window.localStorage.setItem('userData', JSON.stringify(userData));
+        window.localStorage.setItem('authToken', token);
+      }
       await AsyncStorage.setItem('userData', JSON.stringify(userData));
-      await AsyncStorage.setItem('authToken', 'dummy_auth_token_' + Date.now());
-      
+      await AsyncStorage.setItem('authToken', token);
       setUser(userData);
       setIsAuthenticated(true);
-      
       console.log('Login successful');
     } catch (error) {
       console.error('Error during login:', error);
@@ -70,13 +77,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      // Remove user data from AsyncStorage
+      if (Platform.OS === 'web') {
+        window.localStorage.removeItem('userData');
+        window.localStorage.removeItem('authToken');
+      }
       await AsyncStorage.removeItem('userData');
       await AsyncStorage.removeItem('authToken');
-      
       setUser(null);
       setIsAuthenticated(false);
-      
       console.log('Logout successful - User data cleared');
     } catch (error) {
       console.error('Error during logout:', error);

@@ -1,14 +1,15 @@
+import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { BACKEND_URL } from '../../config';
 import { authStyles as styles } from '../../styles/AuthStyle';
@@ -19,7 +20,18 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
+
+  const formatRegisterError = (status: number, errorCode?: string) => {
+    if (status === 409) return 'This phone number is already registered.';
+    if (status === 503 && errorCode === 'database_unavailable') return 'Server database is unavailable. Please try again later.';
+    if (status === 400 && errorCode) return errorCode;
+    if (errorCode) return `${errorCode} (${status})`;
+    return `Registration failed (${status})`;
+  };
 
   const handleRegister = async () => {
     // Check each field individually for better debugging
@@ -56,10 +68,12 @@ const Register = () => {
     const phoneRegex = /^[0-9]{10}$/;
     if (!phoneRegex.test(phone)) {
       Alert.alert('Error', 'Please enter a valid 10-digit phone number');
+      setErrorMessage('Please enter a valid 10-digit phone number');
       return;
     }
 
     setLoading(true);
+    setErrorMessage('');
     try {
       const resp = await fetch(`${BACKEND_URL}/auth/register`, {
         method: 'POST',
@@ -68,37 +82,33 @@ const Register = () => {
       });
       const body = await resp.json().catch(() => ({} as any));
       if (!resp.ok) {
+        const errorText = formatRegisterError(resp.status, body?.error as string | undefined);
+        setErrorMessage(errorText);
+        Alert.alert('Registration Error', errorText);
         if (resp.status === 409) {
-          Alert.alert(
-            'Already Registered',
-            'This phone number is already registered. Please sign in instead.',
-            [
-              { text: 'Cancel', style: 'cancel' },
-              { text: 'Go to Login', onPress: () => router.replace('/(auth)/login') }
-            ]
-          );
           setLoading(false);
           return;
         }
-        if (resp.status === 400 && body?.error) {
-          Alert.alert('Invalid Details', body.error);
-          setLoading(false);
-          return;
-        }
-        throw new Error(body?.error || `Registration failed (${resp.status})`);
+        throw new Error(errorText);
       }
-      Alert.alert('Success', 'Account created. You can log in now.', [
-        { text: 'OK', onPress: () => router.replace('/(auth)/login') }
-      ]);
       setLoading(false);
+      router.replace('/(auth)/login');
+      Alert.alert('Success', 'Account created. You can log in now.');
     } catch (error: any) {
       setLoading(false);
-      Alert.alert('Error', error?.message || 'Registration failed. Please try again.');
+      const message = error?.message || 'Registration failed. Please try again.';
+      setErrorMessage(message);
+      Alert.alert('Error', message);
     }
   };
 
   const handleBackToLogin = () => {
-    router.back();
+    const canGoBack = (router as any)?.canGoBack?.() ?? false;
+    if (canGoBack) {
+      router.back();
+    } else {
+      router.replace('/(auth)/login');
+    }
   };
 
   return (
@@ -141,26 +151,44 @@ const Register = () => {
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Create a password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoCapitalize="none"
-            />
+            <View style={{ position: 'relative', justifyContent: 'center' }}>
+              <TextInput
+                style={[styles.input, { paddingRight: 40 }]}
+                placeholder="Create a password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+              />
+              <TouchableOpacity
+                onPress={() => setShowPassword((prev) => !prev)}
+                style={{ position: 'absolute', right: 10, height: '100%', justifyContent: 'center', alignItems: 'center' }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <MaterialIcons name={showPassword ? 'visibility' : 'visibility-off'} size={24} color="gray" />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Confirm Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Confirm your password"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry
-              autoCapitalize="none"
-            />
+            <View style={{ position: 'relative', justifyContent: 'center' }}>
+              <TextInput
+                style={[styles.input, { paddingRight: 40 }]}
+                placeholder="Confirm your password"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry={!showConfirmPassword}
+                autoCapitalize="none"
+              />
+              <TouchableOpacity
+                onPress={() => setShowConfirmPassword((prev) => !prev)}
+                style={{ position: 'absolute', right: 10, height: '100%', justifyContent: 'center', alignItems: 'center' }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <MaterialIcons name={showConfirmPassword ? 'visibility' : 'visibility-off'} size={24} color="gray" />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <TouchableOpacity 
@@ -172,6 +200,10 @@ const Register = () => {
               {loading ? 'Creating Account...' : 'Create Account'}
             </Text>
           </TouchableOpacity>
+
+          {errorMessage ? (
+            <Text style={{ color: 'red', marginTop: 12 }}>{errorMessage}</Text>
+          ) : null}
 
           <TouchableOpacity 
             style={styles.linkButton}
