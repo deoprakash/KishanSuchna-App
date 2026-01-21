@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import translations, { supportedLanguages } from '../translations';
+import {translations, supportedLanguages } from '../translations';
 
 type LanguageCode = 'en' | 'hi' | 'te' | 'ta' | 'gu' | 'mr' | 'bn' | 'pa' | 'kn' | 'ml' | 'od';
 

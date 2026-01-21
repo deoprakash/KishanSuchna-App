@@ -1,6 +1,6 @@
 import { FontAwesome } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState, useCallback } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -11,7 +11,38 @@ import {
   View
 } from 'react-native';
 import { useTranslation } from '../context/TranslationContext';
+
 import { weatherStyles as styles } from '../styles/weatherStyles';
+
+// Move getWeatherIcon above component for stable reference
+const getWeatherIcon = (condition: string): WeatherIconName => {
+  const lowerCondition = condition.toLowerCase();
+  if (lowerCondition.includes('sunny') || lowerCondition.includes('clear')) {
+    return 'sun-o';
+  }
+  if (lowerCondition.includes('cloud')) {
+    return 'cloud';
+  }
+  if (lowerCondition.includes('rain') || lowerCondition.includes('drizzle') || lowerCondition.includes('shower')) {
+    return 'tint';
+  }
+  if (lowerCondition.includes('thunder') || lowerCondition.includes('storm')) {
+    return 'bolt';
+  }
+  return 'sun-o'; // default
+};
+
+// Move fetchWithTimeout above component for stable reference
+const fetchWithTimeout = async (url: string, timeoutMs = 20000) => {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    return response;
+  } finally {
+    clearTimeout(timeout);
+  }
+};
 
 type WeatherIconName = 'sun-o' | 'cloud' | 'tint' | 'bolt';
 
@@ -51,24 +82,12 @@ const WeatherComponent = forwardRef<any, WeatherComponentProps>(function Weather
   const [currentCoords, setCurrentCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   // City dropdown removed; using live location only
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
-  const REQUEST_TIMEOUT_MS = 20000;
   const isFetchingRef = useRef(false);
-
-  const fetchWithTimeout = async (url: string, timeoutMs = REQUEST_TIMEOUT_MS) => {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
-    try {
-      const response = await fetch(url, { signal: controller.signal });
-      return response;
-    } finally {
-      clearTimeout(timeout);
-    }
-  };
 
   // City list removed; relying only on device location
 
   // Open-Meteo API for weather data
-  const fetchRealWeatherData = async (): Promise<WeatherData> => {
+  const fetchRealWeatherData = useCallback(async (): Promise<WeatherData> => {
     try {
       if (currentCoords) {
         const { latitude, longitude } = currentCoords;
@@ -119,7 +138,7 @@ const WeatherComponent = forwardRef<any, WeatherComponentProps>(function Weather
       console.error('Open-Meteo API Error:', error);
       throw error;
     }
-  };
+  }, [currentCoords, selectedCity.displayName, selectedCity.state]);
 
   // Use device location to set current city/state and coords
   const enableLiveLocation = useCallback(async () => {
@@ -157,24 +176,7 @@ const WeatherComponent = forwardRef<any, WeatherComponentProps>(function Weather
     }
   }, [t]);
 
-  const getWeatherIcon = (condition: string): WeatherIconName => {
-    const lowerCondition = condition.toLowerCase();
-    
-    if (lowerCondition.includes('sunny') || lowerCondition.includes('clear')) {
-      return 'sun-o';
-    }
-    if (lowerCondition.includes('cloud')) {
-      return 'cloud';
-    }
-    if (lowerCondition.includes('rain') || lowerCondition.includes('drizzle') || lowerCondition.includes('shower')) {
-      return 'tint';
-    }
-    if (lowerCondition.includes('thunder') || lowerCondition.includes('storm')) {
-      return 'bolt';
-    }
-    
-    return 'sun-o'; // default
-  };
+  // ...existing code...
 
   // Helper to format date labels like 17 Oct, 18 Oct
   const formatForecastDate = (isoDate: string): string => {
