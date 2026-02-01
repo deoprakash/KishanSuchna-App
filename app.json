@@ -69,6 +69,8 @@
       "reactCompiler": true
     },
     "extra": {
+        // "OPENWEATHER_API_KEY": "c7215ae4578455e13a36871e1e5a1c1d",
+        "OPENWEATHER_API_KEY": "35b0da3ae39c06cb8a480e9ae96dc0fd",
       "router": {},
       "eas": {
         "projectId": "a0e80418-79e4-4f97-a725-e41c6a01b4af"

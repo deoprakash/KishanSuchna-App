@@ -1,7 +1,7 @@
 import { FontAwesome } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, Image, Linking, Modal, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { BACKEND_URL } from '../../config';
 import { useAuth } from '../../context/AuthContext';
@@ -16,6 +16,7 @@ const Profile = () => {
   const [editVisible, setEditVisible] = useState(false);
   const [name, setName] = useState<string>(user?.fullName || user?.name || '');
   const [email, setEmail] = useState<string>(user?.email || '');
+  const [address, setAddress] = useState<string>(user?.address || '');
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [photoB64, setPhotoB64] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -111,6 +112,7 @@ const Profile = () => {
   const openEdit = () => {
     setName(user?.fullName || user?.name || '');
     setEmail(user?.email || '');
+    setAddress(user?.address || '');
     setPhoneEdit(user?.phone || '');
     // Keep any existing uploaded profile photo visible until the user
     // explicitly replaces or removes it. Clearing temp photo state here
@@ -169,7 +171,7 @@ const Profile = () => {
     }
     try {
       setSaving(true);
-      const payload: any = { phone: user.phone, fullName: name, email };
+      const payload: any = { phone: user.phone, fullName: name, email, address };
       const trimmedPhone = (phoneEdit || '').trim();
       if (trimmedPhone && trimmedPhone !== user.phone) {
         if (!/^[0-9]{10}$/.test(trimmedPhone)) {
@@ -195,7 +197,7 @@ const Profile = () => {
       }
 
       const data = await resp.json();
-      await updateUser({ ...data.user, name: data.user.fullName || name });
+      await updateUser({ ...data.user, name: data.user.fullName || name, fullName: data.user.fullName || name, address: data.user.address || address });
       // Clear local temporary image data after successful save. The
       // persisted `profilePhotoUrl` will be available from the updated user
       // returned by the server (and persisted by AuthContext).
@@ -252,6 +254,16 @@ const Profile = () => {
             <Text style={styles.label}>Name</Text>
           </View>
           <Text style={styles.value}>{user?.name || 'N/A'}</Text>
+        </View>
+
+        <View style={styles.separator} />
+
+        <View style={styles.row}>
+          <View style={styles.rowLeft}>
+            <FontAwesome name="map-marker" size={18} color="#008000" />
+            <Text style={styles.label}>Address</Text>
+          </View>
+          <Text style={styles.value}>{user?.address || 'N/A'}</Text>
         </View>
 
         <View style={styles.separator} />
@@ -367,6 +379,15 @@ const Profile = () => {
                 onChangeText={setPhoneEdit}
                 maxLength={10}
                 placeholder="Enter 10-digit phone"
+                style={{ borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 10, marginTop: 6 }}
+              />
+
+              {/* Address */}
+              <Text style={{ fontWeight: '600', marginTop: 12 }}>Address</Text>
+              <TextInput
+                value={address}
+                onChangeText={setAddress}
+                placeholder="Enter address"
                 style={{ borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 10, marginTop: 6 }}
               />
 

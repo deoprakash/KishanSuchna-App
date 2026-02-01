@@ -1,9 +1,10 @@
 import { Stack } from 'expo-router';
 import Head from 'expo-router/head';
 import * as SplashScreen from "expo-splash-screen";
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { TranslationProvider } from '../context/TranslationContext';
+import { useRobotoFont } from './_fonts';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -53,6 +54,8 @@ const AppNavigator = () => {
 };
 
 const RootNavigation = () => {
+  const fontsLoaded = useRobotoFont();
+  if (!fontsLoaded) return null;
   return (
     <>
       <Head>

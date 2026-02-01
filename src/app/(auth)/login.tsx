@@ -1,15 +1,15 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { BACKEND_URL } from '../../config';
 import { useAuth } from '../../context/AuthContext';
@@ -69,6 +69,7 @@ const Login = () => {
       const data = await resp.json();
       const userData = {
         phone: data.user?.phone || phone,
+        fullName: data.user?.fullName || '',
         name: data.user?.fullName || 'User',
         loginTime: new Date().toISOString(),
       };

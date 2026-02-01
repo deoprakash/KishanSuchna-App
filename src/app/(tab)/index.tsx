@@ -1,17 +1,17 @@
 import { Image, StyleSheet, Text, View } from 'react-native';
+import SupportCard from '../../components/SupportCard';
 import WeatherComponent from '../../components/WeatherComponent';
 import imagePath from '../../constants/imagePath';
+import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from '../../context/TranslationContext';
 import { homeStyles as styles } from '../../styles/homeStyles';
-
 // Weather summary for white card
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const HomeTab = () => {
   const { t } = useTranslation();
-  
+  const { user } = useAuth();
   // Removed Crop Prices tab
-  
   return (
     <View style={styles.container}>
       <Image 
@@ -23,8 +23,10 @@ const HomeTab = () => {
         
         {/* Welcome Text */}
         <View style={localStyles.welcomeContainer}>
-          <Text style={localStyles.welcomeText}>{t('home.welcome')}</Text>
-          <Text style={localStyles.subtitleText}>{t('home.subtitle')}</Text>
+          <Text style={localStyles.welcomeText}>{`🌱 Welcome Back, ${user?.fullName || user?.name || 'Guest'}! 🌾`}</Text>
+          <Text style={localStyles.subtitleText}>
+            {`Empowering Farmers • Real-time Weather • Commodity Sharing • Crop Insights`}
+          </Text>
         </View>
       {/* Weather Card Widget */}
       <View style={localStyles.weatherCardContainer}>
@@ -35,7 +37,9 @@ const HomeTab = () => {
         {/* Weather Update Summary */}
         <WeatherComponentSummary />
       </View>
-      {/* Navigation Cards removed (Camera, Weather, Crop Prices) */}
+      {/* Support Card */}
+      <SupportCard />
+      {/* News Card removed */}
     </View>
   );
 };
@@ -67,6 +71,7 @@ const WeatherComponentSummary = () => {
 };
 
 const localStyles = StyleSheet.create({
+    // tipsNewsCard removed, now in TipsNewsCard component
   simpleWhiteCard: {
     marginTop: 24,
     marginHorizontal: 20,

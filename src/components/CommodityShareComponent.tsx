@@ -17,6 +17,7 @@ interface Listing {
   createdAt: number;
   ownerPhone?: string | null;
   photoUrl?: string;
+  address?: string;
 }
 
 const STORAGE_KEY = '@commodity_listings_v1';
@@ -24,6 +25,7 @@ const STORAGE_KEY = '@commodity_listings_v1';
 interface Props { refreshToken?: number }
 
 const CommodityShareComponent: React.FC<Props> = ({ refreshToken }) => {
+  const { user, isAuthenticated } = useAuth();
   const [listings, setListings] = useState<Listing[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [showInquiriesModal, setShowInquiriesModal] = useState(false);
@@ -42,6 +44,7 @@ const CommodityShareComponent: React.FC<Props> = ({ refreshToken }) => {
   const [notificationPolling, setNotificationPolling] = useState<any>(null);
   const [shownNotifications, setShownNotifications] = useState<Set<string>>(new Set());
   const [lastViewedInquiriesTime, setLastViewedInquiriesTime] = useState<number>(0);
+  const [address, setAddress] = useState<string>(user?.address || '');
 
   useEffect(() => {
     loadListings();
@@ -51,10 +54,12 @@ const CommodityShareComponent: React.FC<Props> = ({ refreshToken }) => {
     checkForNotifications();
     const interval = setInterval(checkForNotifications, 15000); // every 15 seconds (reduced server load)
     setNotificationPolling(interval);
+    // Always sync address from profile when user changes
+    setAddress(user?.address || '');
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, []);
+  }, [user]);
 
   const loadLastViewedTime = async () => {
     try {
@@ -103,8 +108,6 @@ const CommodityShareComponent: React.FC<Props> = ({ refreshToken }) => {
     }
   };
 
-  const { user, isAuthenticated } = useAuth();
-
   const loadListings = async () => {
     // Try server first, then fall back to local cache
     try {
@@ -147,7 +150,7 @@ const CommodityShareComponent: React.FC<Props> = ({ refreshToken }) => {
     if (typeof refreshToken !== 'undefined') {
       loadListings();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [refreshToken]);
 
   // Refresh inquiry count when listings change or last viewed time changes
@@ -359,6 +362,7 @@ const CommodityShareComponent: React.FC<Props> = ({ refreshToken }) => {
     ts: number;
     requesterPhone?: string;
     requesterName?: string;
+    address?: string;
   }
 
   const loadInquiries = async (): Promise<Inquiry[]> => {
@@ -404,7 +408,8 @@ const CommodityShareComponent: React.FC<Props> = ({ refreshToken }) => {
     const inquiryPayload = {
       listingId: item.id,
       requesterPhone: user.phone,
-      requesterName: user.name || user.fullName || 'User'
+      requesterName: user.name || user.fullName || 'User',
+      address: address
     };
 
     try {
@@ -424,7 +429,8 @@ const CommodityShareComponent: React.FC<Props> = ({ refreshToken }) => {
         listingId: item.id, 
         ts: Date.now(),
         requesterPhone: user.phone,
-        requesterName: user.name || user.fullName || 'User'
+        requesterName: user.name || user.fullName || 'User',
+        address: address
       });
       await saveInquiries(inquiries);
     }
@@ -634,6 +640,8 @@ const CommodityShareComponent: React.FC<Props> = ({ refreshToken }) => {
             <TextInput placeholder="Commodity Name" value={commodity} onChangeText={setCommodity} style={styles.input} />
             <TextInput placeholder="Quantity" value={quantity} onChangeText={setQuantity} style={styles.input} keyboardType="numeric" />
             <TextInput placeholder="Price (₹)" value={price} onChangeText={setPrice} style={styles.input} keyboardType="numeric" />
+            <TextInput placeholder="Address" value={address} onChangeText={setAddress} style={styles.input} />
+            {/* Autofill from profile, but allow edit */}
 
             <View style={styles.typeRow}>
               <TouchableOpacity onPress={() => setType('sell')} style={[styles.typeBtn, type === 'sell' && styles.typeBtnActive]}>
@@ -691,6 +699,8 @@ const CommodityShareComponent: React.FC<Props> = ({ refreshToken }) => {
             <TextInput placeholder="Commodity Name" value={commodity} onChangeText={setCommodity} style={styles.input} />
             <TextInput placeholder="Quantity" value={quantity} onChangeText={setQuantity} style={styles.input} keyboardType="numeric" />
             <TextInput placeholder="Price (₹)" value={price} onChangeText={setPrice} style={styles.input} keyboardType="numeric" />
+            <TextInput placeholder="Address" value={address} onChangeText={setAddress} style={styles.input} />
+            {/* Autofill from profile, but allow edit */}
 
             <View style={styles.typeRow}>
               <TouchableOpacity onPress={() => setType('sell')} style={[styles.typeBtn, type === 'sell' && styles.typeBtnActive]}>
@@ -749,6 +759,7 @@ interface InquiryItem {
   ts: number;
   requesterPhone?: string;
   requesterName?: string;
+  address?: string;
 }
 
 const InquiryList: React.FC<{ listings: Listing[]; onClose: () => void; onViewed: () => void }> = ({ listings, onClose, onViewed }) => {
@@ -799,6 +810,9 @@ const InquiryList: React.FC<{ listings: Listing[]; onClose: () => void; onViewed
         <Text style={{ fontWeight: '700', fontSize: 16, marginBottom: 4 }}>{listing ? listing.commodity : 'Listing removed'}</Text>
         {item.requesterPhone && (
           <Text style={{ color: '#2980b9', fontWeight: '600', fontSize: 14 }}>Requester: {item.requesterName || 'User'} ({item.requesterPhone})</Text>
+        )}
+        {item.address && (
+          <Text style={{ color: '#16a085', fontSize: 13, marginTop: 2 }}>Address: {item.address}</Text>
         )}
         <Text style={{ color: '#888', fontSize: 12, marginTop: 4 }}>{new Date(item.ts).toLocaleString()}</Text>
       </View>
