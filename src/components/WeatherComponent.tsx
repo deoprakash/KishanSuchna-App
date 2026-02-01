@@ -1,19 +1,17 @@
 import { FontAwesome } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Linking from 'expo-linking';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  RefreshControl,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    Alert,
+    RefreshControl,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { useTranslation } from '../context/TranslationContext';
 
-import Constants from 'expo-constants';
 import { weatherStyles as styles } from '../styles/weatherStyles';
 
 // Move getWeatherIcon above component for stable reference
@@ -79,140 +77,117 @@ const WeatherComponent = forwardRef<any, WeatherComponentProps>(function Weather
   const { t } = useTranslation();
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true); // Start with loading true
+  const [locationDenied, setLocationDenied] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [selectedCity, setSelectedCity] = useState<City>({ name: 'Current Location', displayName: 'Current Location', state: '' });
   const [currentCoords, setCurrentCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   // City dropdown removed; using live location only
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
-  const [locationDenied, setLocationDenied] = useState(false);
   const isFetchingRef = useRef(false);
 
   // City list removed; relying only on device location
 
-  // OpenWeatherMap API for weather data
-    const OPENWEATHER_API_KEY = Constants.expoConfig.extra?.OPENWEATHER_API_KEY;
-    const fetchRealWeatherData = useCallback(async (): Promise<WeatherData> => {
-      try {
-        if (currentCoords) {
-          const { latitude, longitude } = currentCoords;
-          // Fetch current weather
-          const currentUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${OPENWEATHER_API_KEY}&units=metric`;
-          const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&appid=${OPENWEATHER_API_KEY}&units=metric`;
-          const [currentRes, forecastRes] = await Promise.all([
-            fetchWithTimeout(currentUrl),
-            fetchWithTimeout(forecastUrl)
-          ]);
-          if (!currentRes.ok || !forecastRes.ok) {
-            throw new Error(`Weather API Error: ${currentRes.status} / ${forecastRes.status}`);
-          }
-          const currentData = await currentRes.json();
-          const forecastData = await forecastRes.json();
-          // Map OpenWeatherMap weather to our structure
-          const condition = currentData.weather && currentData.weather[0] ? currentData.weather[0].main : 'Clear';
-          const icon = getWeatherIcon(condition);
-          // 5-day forecast: OpenWeatherMap gives 3-hour intervals, group by day
-          const forecastByDay: { [date: string]: { high: number; low: number; condition: string; count: number } } = {};
-          forecastData.list.forEach((item: any) => {
-            const date = item.dt_txt.split(' ')[0];
-            if (!forecastByDay[date]) {
-              forecastByDay[date] = {
-                high: item.main.temp_max,
-                low: item.main.temp_min,
-                condition: item.weather[0].main,
-                count: 1
-              };
-            } else {
-              forecastByDay[date].high = Math.max(forecastByDay[date].high, item.main.temp_max);
-              forecastByDay[date].low = Math.min(forecastByDay[date].low, item.main.temp_min);
-              forecastByDay[date].count++;
-            }
-          });
-          const forecastDates = Object.keys(forecastByDay).slice(0, 5);
-          const dailyForecasts = forecastDates.map((date, idx) => ({
-            dayIndex: idx,
-            high: Math.round(forecastByDay[date].high),
-            low: Math.round(forecastByDay[date].low),
-            condition: forecastByDay[date].condition,
-            date
-          }));
-          const result: WeatherData = {
-            location: `${selectedCity.displayName}${selectedCity.state ? `, ${selectedCity.state}` : ''}`,
-            temperature: Math.round(currentData.main.temp),
-            condition,
-            humidity: currentData.main.humidity,
-            windSpeed: Math.round(currentData.wind.speed),
-            icon,
-            forecast: dailyForecasts
-          };
-          try {
-            await AsyncStorage.setItem('lastWeatherData', JSON.stringify(result));
-            await AsyncStorage.setItem('lastWeatherUpdatedAt', new Date().toISOString());
-          } catch {}
-          return result;
+  // Open-Meteo API for weather data
+  const fetchRealWeatherData = useCallback(async (): Promise<WeatherData> => {
+    try {
+      if (currentCoords) {
+        const { latitude, longitude } = currentCoords;
+        // Open-Meteo API: get current weather and daily forecast
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_mean,weathercode&forecast_days=5&timezone=auto`;
+        const response = await fetchWithTimeout(url);
+        if (!response.ok) {
+          throw new Error(`Weather API Error: ${response.status}`);
         }
-        throw new Error('No coordinates available');
-      } catch (error) {
-        console.error('OpenWeatherMap API Error:', error);
-        throw error;
+        const data = await response.json();
+        if (!data.current_weather || !data.daily) {
+          throw new Error('Invalid weather data structure');
+        }
+        // Map Open-Meteo weather codes to conditions
+        const weatherCodeToCondition = (code: number) => {
+          if ([0, 1].includes(code)) return 'Sunny';
+          if ([2, 3, 45, 48].includes(code)) return 'Cloudy';
+          if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return 'Rainy';
+          if ([71, 73, 75, 77, 85, 86].includes(code)) return 'Snowy';
+          if ([95, 96, 99].includes(code)) return 'Thunderstorm';
+          return 'Clear';
+        };
+        const forecast = data.daily;
+        let dailyForecasts = Array.from({ length: 5 }).map((_, index) => ({
+          dayIndex: index,
+          high: Math.round(forecast.temperature_2m_max[index]),
+          low: Math.round(forecast.temperature_2m_min[index]),
+          condition: weatherCodeToCondition(forecast.weathercode[index]),
+          date: forecast.time[index],
+        }));
+        const result: WeatherData = {
+          location: `${selectedCity.displayName}${selectedCity.state ? `, ${selectedCity.state}` : ''}`,
+          temperature: Math.round(data.current_weather.temperature),
+          condition: weatherCodeToCondition(data.current_weather.weathercode),
+          humidity: 60, // Open-Meteo free API does not provide current humidity; set a placeholder or fetch from another endpoint if needed
+          windSpeed: Math.round(data.current_weather.windspeed),
+          icon: getWeatherIcon(weatherCodeToCondition(data.current_weather.weathercode)),
+          forecast: dailyForecasts
+        };
+        try {
+          await AsyncStorage.setItem('lastWeatherData', JSON.stringify(result));
+          await AsyncStorage.setItem('lastWeatherUpdatedAt', new Date().toISOString());
+        } catch {}
+        return result;
       }
-    }, [currentCoords, selectedCity.displayName, selectedCity.state]);
+      throw new Error('No coordinates available');
+    } catch (error) {
+      console.error('Open-Meteo API Error:', error);
+      throw error;
+    }
+  }, [currentCoords, selectedCity.displayName, selectedCity.state]);
 
   // Use device location to set current city/state and coords
   const enableLiveLocation = useCallback(async () => {
-    try {
-      // Dynamically import expo-location to avoid hard dependency if unavailable
-      // @ts-ignore
-      const Location = (await import('expo-location')).default || (await import('expo-location'));
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setLocationDenied(true);
-        setInitialLoadComplete(true);
-        return;
-      } else {
-        setLocationDenied(false);
-      }
-      let position = null;
-      try {
-        position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Highest, maximumAge: 10000 });
-      } catch (err) {
-        // Retry with lower accuracy if failed
-        try {
-          position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced, maximumAge: 30000 });
-        } catch (err2) {
-          setLocationDenied(true);
-          setInitialLoadComplete(true);
-          Alert.alert('Location', 'Unable to fetch your location. Please ensure location services are enabled.');
-          return;
-        }
-      }
-      if (!position || !position.coords) {
-        setLocationDenied(true);
-        setInitialLoadComplete(true);
-        Alert.alert('Location', 'Unable to fetch your location. Please ensure location services are enabled.');
-        return;
-      }
-      const { latitude, longitude } = position.coords;
-      setCurrentCoords({ latitude, longitude });
-      try {
-        const geo = await Location.reverseGeocodeAsync({ latitude, longitude });
-        if (geo && geo[0]) {
-          // Prefer city and state, fallback to subregion if needed
-          let cityName = geo[0].city || geo[0].subregion || '';
-          let stateName = geo[0].region || geo[0].subregion || '';
-          // If both are missing, fallback to 'Unknown Location'
-          if (!cityName && !stateName) {
-            cityName = 'Unknown Location';
-          }
-          setSelectedCity({ name: cityName, displayName: cityName, state: stateName });
-        }
-      } catch {}
-      // Do not fetch immediately; effect will trigger when city/coords update
-    } catch (e) {
+  try {
+
+    const Location =
+      (await import('expo-location')).default || await import('expo-location');
+
+    const { status } = await Location.requestForegroundPermissionsAsync();
+
+    if (status !== 'granted') {
       setLocationDenied(true);
-      setInitialLoadComplete(true);
-      Alert.alert('Location', 'Unable to fetch your location. Please ensure location services are enabled.');
+      Alert.alert(
+        'Location Required',
+        'Please allow location access to fetch local weather.',
+        [{ text: 'Retry', onPress: enableLiveLocation }]
+      );
+      return;
     }
-  }, [t]);
+
+    setLocationDenied(false);
+
+    const position = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.High
+    });
+
+    console.log('📍 Coordinates:', position.coords);
+
+    setCurrentCoords(position.coords);
+
+    const geo = await Location.reverseGeocodeAsync(position.coords);
+
+    if (geo[0]) {
+      setSelectedCity({
+        name: geo[0].city || 'Current',
+        displayName: geo[0].city || 'Current',
+        state: geo[0].region || ''
+      });
+    }
+
+  } catch (e) {
+    Alert.alert(
+      'Location Error',
+      'Unable to get GPS. Please try again.',
+      [{ text: 'Retry', onPress: enableLiveLocation }]
+    );
+  }
+  }, []);
 
   // ...existing code...
 
@@ -287,24 +262,17 @@ const WeatherComponent = forwardRef<any, WeatherComponentProps>(function Weather
   }, [enableLiveLocation]);
 
   useEffect(() => {
-    // Fetch only when coordinates are available and valid
-    if (
-      currentCoords &&
-      typeof currentCoords.latitude === 'number' &&
-      typeof currentCoords.longitude === 'number' &&
-      !isNaN(currentCoords.latitude) &&
-      !isNaN(currentCoords.longitude)
-    ) {
-      fetchWeatherData();
-    }
+    // Fetch only when coordinates are available
+    if (currentCoords) fetchWeatherData();
   }, [currentCoords, fetchWeatherData]);
 
   // Refresh when refreshTrigger prop changes (tab focus)
-  useEffect(() => {
-    if (refreshTrigger && refreshTrigger > 0) {
-      fetchWeatherData();
-    }
-  }, [refreshTrigger, fetchWeatherData]);
+useEffect(() => {
+  if (refreshTrigger && currentCoords) {
+    fetchWeatherData();
+  }
+}, [refreshTrigger, currentCoords, fetchWeatherData]);
+
 
   // Expose refresh method to parent component
   useImperativeHandle(ref, () => ({
@@ -312,6 +280,25 @@ const WeatherComponent = forwardRef<any, WeatherComponentProps>(function Weather
       fetchWeatherData();
     }
   }));
+
+  if (!currentCoords) {
+ return (
+   <View style={styles.loadingContainer}>
+     <FontAwesome name="map-marker" size={40} color="#008000" />
+     <Text style={{ marginVertical: 10 }}>
+       Location access is required
+     </Text>
+
+     <TouchableOpacity
+       style={styles.retryButton}
+       onPress={enableLiveLocation}
+     >
+       <Text style={styles.retryButtonText}>Enable Location</Text>
+     </TouchableOpacity>
+   </View>
+ );
+}
+
 
   if (loading && !weatherData) {
     return (
@@ -322,22 +309,13 @@ const WeatherComponent = forwardRef<any, WeatherComponentProps>(function Weather
     );
   }
 
-  if (locationDenied && initialLoadComplete) {
+  if (!weatherData && initialLoadComplete) {
     return (
       <View style={styles.errorContainer}>
         <FontAwesome name="exclamation-triangle" size={50} color="#ff4444" />
-        <Text style={styles.errorText}>Location access is required to fetch weather updates.</Text>
-        <TouchableOpacity
-          style={styles.retryButton}
-          onPress={() => {
-            if (Platform.OS === 'ios') {
-              Linking.openURL('app-settings:');
-            } else {
-              Linking.openSettings();
-            }
-          }}
-        >
-          <Text style={styles.retryButtonText}>Grant Location Access</Text>
+        <Text style={styles.errorText}>{t('weather.unableToLoadWeather')}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={handleRefresh}>
+          <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
         </TouchableOpacity>
       </View>
     );
