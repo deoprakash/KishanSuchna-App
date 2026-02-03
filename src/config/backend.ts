@@ -34,4 +34,6 @@ const getBackendUrl = () => {
 };
 
 // export const BACKEND_URL = "https://be.shubhamdev.tech"
-export const BACKEND_URL = getBackendUrl();
+export const BACKEND_URL = "https://kishansuchna-app-backend.onrender.com"
+
+// export const BACKEND_URL = getBackendUrl();
